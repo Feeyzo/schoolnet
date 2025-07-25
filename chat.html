@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolNet Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --schoolnet-green: #28a745;
+            --sidebar-width: 250px;
+        }
+        
+        body {
+            overflow-x: hidden;
+        }
+        
+        /* Sidebar stays fixed */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background: #2c3e50;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        /* Main content adjusts to sidebar */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            min-height: 100vh;
+            transition: all 0.3s;
+        }
+        
+        /* Chat container fills right side */
+        .chat-container {
+            height: calc(100vh - 60px);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Message area sizing */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        /* Active menu item highlight */
+        .nav-link.active {
+            background-color: var(--schoolnet-green) !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Fixed Sidebar -->
+    <div class="sidebar d-flex flex-column">
+        <div class="p-3 text-center text-white">
+            <a class="nav-link text-white" href="index.html"><h5>SchoolNet</h5></a>
+        </div>
+        <ul class="nav flex-column flex-grow-1 p-3">
+            <li class="nav-item">
+                <a class="nav-link text-white" href="admin.html">
+                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white" href="students.html">
+                    <i class="fas fa-users me-2"></i> Students
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white" href="students.html">
+                    <i class="fas fa-chalkboard-teacher me-2"></i> Teachers
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white active" href="chat.html">
+                    <i class="fas fa-comments me-2"></i> Chat
+                </a>
+            </li>
+            <li class="nav-item mt-auto">
+                <a class="nav-link text-white" href="#">
+                    <i class="fas fa-cog me-2"></i> Settings
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Top Navigation -->
+        <nav class="navbar navbar-light bg-white border-bottom">
+            <div class="container-fluid">
+                <button class="btn btn-link" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h5 class="mb-0">SchoolNet Assistant</h5>
+            </div>
+        </nav>
+
+        <!-- Chat Container -->
+        <div class="chat-container p-3">
+            <!-- Messages -->
+            <div class="chat-messages mb-3" id="chatMessages">
+                <div class="message bot-message">
+                    <div class="message-content">
+                        Welcome to SchoolNet Chat! How can I help you today?
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Input -->
+            <div class="input-group">
+                <input type="text" class="form-control" id="userInput" placeholder="Type your message...">
+                <button class="btn btn-success" id="sendButton">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle sidebar visibility
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('d-none');
+            document.querySelector('.main-content').classList.toggle('ml-0');
+            document.querySelector('.main-content').style.width = 
+                document.querySelector('.sidebar').classList.contains('d-none') ? '100%' : 'calc(100% - 250px)';
+        });
+        // Enhanced Chat Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatMessages = document.getElementById('chatMessages');
+            const userInput = document.getElementById('userInput');
+            const sendButton = document.getElementById('sendButton');
+            
+            // Sample responses (replace with Dialogflow later)
+            const botResponses = {
+                "attendance": "86% of the students are present today.",
+                "grades": "Current grades:\n- Math: A\n- English: B+\n- Science: A-",
+                "meeting": "Next PTA meeting:\n📅 August 15, 2023\n⏰ 4:00 PM\n📍 School Auditorium",
+                "default": "I can check attendance, grades, or event schedules. Please ask a specific question."
+            };
+            
+            // Display message in chat
+            function displayMessage(sender, text) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}-message`;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.innerHTML = text.replace(/\n/g, '<br>');
+                
+                messageDiv.appendChild(contentDiv);
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            // Show typing indicator
+            function showTyping() {
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'message bot-message typing-indicator';
+                typingDiv.id = 'typingIndicator';
+                typingDiv.innerHTML = `
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                `;
+                chatMessages.appendChild(typingDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            // Hide typing indicator
+            function hideTyping() {
+                const typing = document.getElementById('typingIndicator');
+                if (typing) typing.remove();
+            }
+            
+            // Process user input
+            function processInput() {
+                const text = userInput.value.trim();
+                if (!text) return;
+                
+                displayMessage('user', text);
+                userInput.value = '';
+                showTyping();
+                
+                // Simulate API delay
+                setTimeout(() => {
+                    hideTyping();
+                    
+                    let response = botResponses.default;
+                    const lowerText = text.toLowerCase();
+                    
+                    if (lowerText.includes('attend')) response = botResponses.attendance;
+                    else if (lowerText.includes('grade') || lowerText.includes('score')) response = botResponses.grades;
+                    else if (lowerText.includes('meet') || lowerText.includes('pta')) response = botResponses.meeting;
+                    
+                    displayMessage('bot', response);
+                }, 1200);
+            }
+            
+            // Event listeners
+            sendButton.addEventListener('click', processInput);
+            userInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') processInput();
+            });
+        });
+    </script>
+</body>
+</html>
